@@ -1,0 +1,3 @@
+[submodule "QJack"]
+	path = qjack
+	url = https://github.com/cybercatalyst/QJack.git
