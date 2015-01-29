@@ -8,11 +8,10 @@ TEMPLATE = app
 SOURCES += main.cpp \
     mainwindow.cpp
 
-INCLUDEPATH += ../qjack
-LIBS += -L../qjack/lib -lqjack -ljack
-
 FORMS += \
     mainwindow.ui
 
 HEADERS += \
     mainwindow.h
+
+include(../pods.pri)

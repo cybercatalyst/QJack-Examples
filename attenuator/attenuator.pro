@@ -9,5 +9,5 @@ TEMPLATE = app
 
 SOURCES += main.cpp
 
-INCLUDEPATH += ../qjack
-LIBS += -L../qjack/lib -lqjack -ljack
+include(../pods.pri)
+
