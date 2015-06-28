@@ -4,13 +4,13 @@
 #include <Processor>
 #include <RingBuffer>
 
-class MyProcessor : public QJack::Processor {
+class MyProcessor : public QtJack::Processor {
 public:
-    MyProcessor(QJack::Client& client)
+    MyProcessor(QtJack::Client& client)
         : Processor(client)  {
         in = client.registerAudioInPort("in");
         out = client.registerAudioOutPort("out");
-        ringBuffer = QJack::AudioRingBuffer();
+        ringBuffer = QtJack::AudioRingBuffer();
     }
 
     void process(int samples) {
@@ -20,16 +20,16 @@ public:
     }
 
 private:
-    QJack::AudioPort in;
-    QJack::AudioPort out;
-    QJack::AudioRingBuffer ringBuffer;
+    QtJack::AudioPort in;
+    QtJack::AudioPort out;
+    QtJack::AudioRingBuffer ringBuffer;
 };
 
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    QJack::Client client;
+    QtJack::Client client;
     client.connectToServer("attenuator_demo");
 
     MyProcessor processor(client);

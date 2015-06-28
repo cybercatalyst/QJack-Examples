@@ -1,22 +1,22 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
-//    This file is part of QJack.                                            //
+//    This file is part of QtJack.                                            //
 //    Copyright (C) 2014-2015 Jacob Dawid <jacob@omg-it.works>               //
 //                                                                           //
-//    QJack is free software: you can redistribute it and/or modify          //
+//    QtJack is free software: you can redistribute it and/or modify          //
 //    it under the terms of the GNU General Public License as published by   //
 //    the Free Software Foundation, either version 3 of the License, or      //
 //    (at your option) any later version.                                    //
 //                                                                           //
-//    QJack is distributed in the hope that it will be useful,               //
+//    QtJack is distributed in the hope that it will be useful,               //
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of         //
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          //
 //    GNU General Public License for more details.                           //
 //                                                                           //
 //    You should have received a copy of the GNU General Public License      //
-//    along with QJack. If not, see <http://www.gnu.org/licenses/>.          //
+//    along with QtJack. If not, see <http://www.gnu.org/licenses/>.          //
 //                                                                           //
-//    It is possible to obtain a closed-source license of QJack.             //
+//    It is possible to obtain a closed-source license of QtJack.             //
 //    If you're interested, contact me at: jacob@omg-it.works                //
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
@@ -27,6 +27,7 @@
 
 // Qt includes
 #include <QFileDialog>
+#include <QMessageBox>
 #include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -39,6 +40,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(&_audioDecoder, SIGNAL(bufferReady()),
             this, SLOT(transferSamples()));
+
+    connect(&_audioDecoder, SIGNAL(error(QAudioDecoder::Error)),
+            this, SLOT(decodingError(QAudioDecoder::Error)));
 
     startTimer(2000);
 }
@@ -61,8 +65,8 @@ void MainWindow::setupJackClient() {
     _client.connectToServer("mp3_player");
 
     // Create a 1000 seconds buffer (at 44,1kHz)
-    _ringBufferLeft  = QJack::AudioRingBuffer(44100 * 1000);
-    _ringBufferRight = QJack::AudioRingBuffer(44100 * 1000);
+    _ringBufferLeft  = QtJack::AudioRingBuffer(44100 * 1000);
+    _ringBufferRight = QtJack::AudioRingBuffer(44100 * 1000);
 
     // Register two output ports
     _outLeft     = _client.registerAudioOutPort("out_1");
@@ -87,18 +91,41 @@ void MainWindow::setupMp3Decoder() {
     _audioDecoder.setAudioFormat(targetAudioFormat);
 }
 
+
+void MainWindow::decodingError(QAudioDecoder::Error error) {
+    switch(error) {
+        case QAudioDecoder::NoError:
+            break;
+        case QAudioDecoder::ResourceError:
+            QMessageBox::warning(this, "Error", "A media resource couldn't be resolved.");
+            break;
+        case QAudioDecoder::FormatError:
+            QMessageBox::warning(this, "Error", "The format of a media resource isn't supported.");
+            break;
+        case QAudioDecoder::AccessDeniedError:
+            QMessageBox::warning(this, "Error", "There are not the appropriate permissions to play a media resource.");
+            break;
+        case QAudioDecoder::ServiceMissingError:
+            QMessageBox::warning(this, "Error", "A valid playback service was not found, playback cannot proceed.");
+            break;
+        default:
+            QMessageBox::warning(this, "Error", "Decoding failed with an unknown error.");
+            break;
+    }
+}
+
 void MainWindow::transferSamples() {
     QAudioBuffer audioBuffer = _audioDecoder.read();
     if(audioBuffer.isValid()) {
         int frames = audioBuffer.frameCount();
-        QJack::AudioSample left[frames];
-        QJack::AudioSample right[frames];
+        QtJack::AudioSample left[frames];
+        QtJack::AudioSample right[frames];
 
 
         const QAudioBuffer::S16S *stereoBuffer = audioBuffer.constData<QAudioBuffer::S16S>();
         for (int i = 0; i < frames; i++) {
-            left[i]     = (QJack::AudioSample)(stereoBuffer[i].left / 65536.0);
-            right[i]    = (QJack::AudioSample)(stereoBuffer[i].right / 65536.0);
+            left[i]     = (QtJack::AudioSample)(stereoBuffer[i].left / 65536.0);
+            right[i]    = (QtJack::AudioSample)(stereoBuffer[i].right / 65536.0);
         }
 
         _ringBufferLeft.write(left, frames);
